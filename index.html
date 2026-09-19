@@ -9212,6 +9212,33 @@ html,body{overscroll-behavior-y:none}
     el.classList.add("show");
     el.classList.toggle("qz-fullscreen",!!fullscreen);
   }
+  /* iPad fix: the editor's left button rail and right question list are two
+     independent scroll areas side by side. On iOS Safari, flinging one of
+     them and then immediately touching the other — before the first one has
+     fully coasted to a stop — can make the still-decelerating side keep
+     scrolling instead of properly handing control to the new touch, which
+     feels like "the two sides aren't separate." The fix WebKit itself
+     recognizes: forcing overflow off and back on for a tick immediately
+     kills any in-flight momentum on an element. So the instant a new touch
+     starts on one panel, we kill whatever momentum might still be running
+     on the OTHER one, guaranteeing a clean handoff every time. */
+  function qzKillMomentum(el){
+    if(!el)return;
+    const prevY=el.style.overflowY;
+    el.style.overflowY="hidden";
+    void el.offsetHeight; /* force reflow so the browser actually applies it */
+    el.style.overflowY=prevY||"";
+  }
+  function qzWireScrollHandoff(bodyEl){
+    if(!bodyEl||bodyEl.dataset.qzScrollHandoffWired)return;
+    bodyEl.dataset.qzScrollHandoffWired="1";
+    bodyEl.addEventListener("touchstart",e=>{
+      const rail=bodyEl.querySelector(".qz-q9-rail-scroll");
+      if(!rail)return;
+      if(e.target.closest(".qz-q9-rail-scroll"))qzKillMomentum(bodyEl);
+      else qzKillMomentum(rail);
+    },{passive:true});
+  }
   function qzStopTimer(){if(qzTimerHandle){clearInterval(qzTimerHandle);qzTimerHandle=null}}
   function qzClosePage(){
     const el=document.getElementById("qzPageOverlay");
@@ -10833,6 +10860,7 @@ Next question...">${esc(bulkText)}</textarea></label>
     const bodyEl=document.getElementById("qzPageBody");
     bodyEl.innerHTML=qzPageTopbar()+'<div class="status" style="margin:40px 18px">Loading quiz…</div>';
     document.getElementById("qzTopClose").onclick=()=>qzClosePage();
+    qzWireScrollHandoff(bodyEl);
 
     let questions=[],settings;
     try{
