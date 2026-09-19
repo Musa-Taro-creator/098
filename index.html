@@ -9602,8 +9602,12 @@ Next question...">${esc(bulkText)}</textarea></label>
     function wire(){
       document.getElementById("qzAddQCancel").onclick=qzCloseSubDialog;
       document.querySelectorAll(".qz-addq-tab").forEach(b=>{b.onclick=()=>{syncFieldsFromDom();tab=b.dataset.tab;render()}});
-      document.getElementById("qzAddQDest").onchange=e=>{destination=e.target.value;refId=null;render()};
-      document.getElementById("qzAddQPos").onchange=e=>{position=e.target.value;if(position!=="before"&&position!=="after")refId=null;render()};
+      /* Same class of bug as the Parse/Preview fix above: these must capture
+         whatever is currently typed in the bulk boxes before render() wipes
+         them by regenerating the dialog from the (otherwise stale) state
+         variables. */
+      document.getElementById("qzAddQDest").onchange=e=>{syncFieldsFromDom();destination=e.target.value;refId=null;render()};
+      document.getElementById("qzAddQPos").onchange=e=>{syncFieldsFromDom();position=e.target.value;if(position!=="before"&&position!=="after")refId=null;render()};
       const searchInp=document.getElementById("qzAddQPickerSearch");
       if(searchInp)searchInp.oninput=()=>{pickerQuery=searchInp.value;render()};
       document.querySelectorAll(".qz-addq-picker-row").forEach(b=>{b.onclick=()=>{refId=b.dataset.refid;render()}});
@@ -9685,6 +9689,7 @@ Next question...">${esc(bulkText)}</textarea></label>
         const reader=new FileReader();
         reader.onload=()=>{
           bulkText=String(reader.result||"");
+          keyText=document.getElementById("qzAqKeyArea").value;
           bulkParsed=qzParseBulkText(bulkText);
           bulkMissingCursor=0;bulkProblemCursor=0;
           render();
@@ -9693,7 +9698,15 @@ Next question...">${esc(bulkText)}</textarea></label>
         reader.readAsText(file);
       };
       document.getElementById("qzAqParse").onclick=()=>{
+        /* Bug fix: this used to only re-read the questions box before
+           re-rendering the dialog, which regenerates the answer-key
+           textarea's HTML from the stale `keyText` variable — silently
+           wiping out anything the user had already typed into the
+           "Bulk paste answer key" box. Capture it here too so a normal
+           "fill both boxes, then Parse & Preview, then Apply Answer Key"
+           flow doesn't lose the key. */
         bulkText=document.getElementById("qzAqBulkArea").value;
+        keyText=document.getElementById("qzAqKeyArea").value;
         bulkParsed=qzParseBulkText(bulkText);
         bulkMissingCursor=0;bulkProblemCursor=0;
         render();
