@@ -9554,7 +9554,7 @@ Next question...">${esc(bulkText)}</textarea></label>
           <input type="file" id="qzAqUploadFile" accept=".txt,.csv,text/plain,text/csv" style="display:none">
           <button type="button" id="qzAqUploadBtn" class="btn" style="flex-shrink:0">Upload .txt/.csv</button>
         </div>
-        <div class="form-actions" style="margin-top:10px"><button id="qzAqParse" class="btn">Parse &amp; Preview</button><button id="qzAqApplyKey" class="btn">Apply Answer Key</button></div>
+        <div class="form-actions" style="margin-top:10px"><button id="qzAqParse" class="btn">Apply Answer Key &amp; Preview</button></div>
         <div id="qzAqPreview" style="margin-top:10px">${bulkPreviewHtml()}</div>`;
     }
     function render(){
@@ -9680,6 +9680,41 @@ Next question...">${esc(bulkText)}</textarea></label>
         };
       });
     }
+    /* "Parse & Preview" and "Apply Answer Key" used to be two separate
+       buttons/steps, but they always served the same purpose (turn the two
+       text boxes into ready questions) and splitting them caused a real bug:
+       clicking Parse & Preview first would wipe the just-typed answer key
+       (see the bulkText/keyText capture below), so by the time someone
+       clicked Apply Answer Key afterward there was nothing left to apply.
+       Merged into one action — parse the questions, then apply whatever
+       valid answer-key lines are present (silently doing nothing if the key
+       box is empty, so this still works as a plain preview). */
+    function qzApplyKeyToParsed(){
+      const key=qzParseAnswerKey(keyText);
+      if(!key.size)return 0;
+      let applied=0;
+      bulkParsed.forEach((q,i)=>{
+        const indices=key.get(i+1);
+        if(!indices||q.type!=="mcq")return;
+        const normOpts=(q.options||[]).map(qzNormOpt);
+        const valid=indices.filter(idx=>idx>=0&&idx<normOpts.length);
+        if(!valid.length)return;
+        q.correct_answer=valid.length>1?valid.sort((a,b)=>a-b):valid[0];
+        q.allow_multiple=valid.length>1;
+        q._needsReview=false;
+        applied++;
+      });
+      return applied;
+    }
+    function qzParseAndApplyKey(){
+      bulkText=document.getElementById("qzAqBulkArea").value;
+      keyText=document.getElementById("qzAqKeyArea").value;
+      bulkParsed=qzParseBulkText(bulkText);
+      bulkMissingCursor=0;bulkProblemCursor=0;
+      const applied=bulkParsed.length?qzApplyKeyToParsed():0;
+      render();
+      if(applied)toast(`Answer key applied to ${applied} question${applied===1?"":"s"}`);
+    }
     function wireBulk(){
       document.getElementById("qzAqUploadBtn").onclick=()=>document.getElementById("qzAqUploadFile").click();
       document.getElementById("qzAqUploadFile").onchange=event=>{
@@ -9692,48 +9727,14 @@ Next question...">${esc(bulkText)}</textarea></label>
           keyText=document.getElementById("qzAqKeyArea").value;
           bulkParsed=qzParseBulkText(bulkText);
           bulkMissingCursor=0;bulkProblemCursor=0;
+          const applied=bulkParsed.length?qzApplyKeyToParsed():0;
           render();
+          if(applied)toast(`Answer key applied to ${applied} question${applied===1?"":"s"}`);
         };
         reader.onerror=()=>toast("Couldn't read that file");
         reader.readAsText(file);
       };
-      document.getElementById("qzAqParse").onclick=()=>{
-        /* Bug fix: this used to only re-read the questions box before
-           re-rendering the dialog, which regenerates the answer-key
-           textarea's HTML from the stale `keyText` variable — silently
-           wiping out anything the user had already typed into the
-           "Bulk paste answer key" box. Capture it here too so a normal
-           "fill both boxes, then Parse & Preview, then Apply Answer Key"
-           flow doesn't lose the key. */
-        bulkText=document.getElementById("qzAqBulkArea").value;
-        keyText=document.getElementById("qzAqKeyArea").value;
-        bulkParsed=qzParseBulkText(bulkText);
-        bulkMissingCursor=0;bulkProblemCursor=0;
-        render();
-      };
-      document.getElementById("qzAqApplyKey").onclick=()=>{
-        bulkText=document.getElementById("qzAqBulkArea").value;
-        keyText=document.getElementById("qzAqKeyArea").value;
-        if(!bulkParsed.length)bulkParsed=qzParseBulkText(bulkText);
-        if(!bulkParsed.length)return alert("Paste some questions first.");
-        const key=qzParseAnswerKey(keyText);
-        if(!key.size)return alert("Couldn't find any answer-key lines like \"1. A\".");
-        let applied=0;
-        bulkParsed.forEach((q,i)=>{
-          const indices=key.get(i+1);
-          if(!indices||q.type!=="mcq")return;
-          const normOpts=(q.options||[]).map(qzNormOpt);
-          const valid=indices.filter(idx=>idx>=0&&idx<normOpts.length);
-          if(!valid.length)return;
-          q.correct_answer=valid.length>1?valid.sort((a,b)=>a-b):valid[0];
-          q.allow_multiple=valid.length>1;
-          q._needsReview=false;
-          applied++;
-        });
-        bulkMissingCursor=0;bulkProblemCursor=0;
-        render();
-        toast(applied?`Answer key applied to ${applied} question${applied===1?"":"s"}`:"No matching questions found for that answer key");
-      };
+      document.getElementById("qzAqParse").onclick=qzParseAndApplyKey;
       wireBulkPreview();
     }
     function wireBulkPreview(){
