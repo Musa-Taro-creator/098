@@ -9030,11 +9030,59 @@ html,body{overscroll-behavior-y:none}
      option is correct. Blocks with exactly two True/False-like options
      become true_false questions; blocks with no options become
      short_answer questions (optionally seeded from an "Answer: ..." line). */
+  /* Splitting on blank lines alone breaks the moment a paste has no blank
+     line between questions (e.g. pasted straight from a numbered exam doc
+     that lost its paragraph spacing) — every question then falls into one
+     giant block, and every lettered option across the whole paste gets
+     merged into a single "Question 1". These three helpers plus
+     qzSplitBulkBlocks reproduce the old reference tool's tolerant splitter:
+     a new question also starts wherever a numbered line ("45.", "Q46)",
+     "Question 47:") appears, or wherever a question-shaped sentence follows
+     a block that already has options — blank lines are still honored too. */
+  function qzIsLetterOptionLine(line){
+    return /^[*✓]?\s*[A-Za-z]\s*[\.\):\-\],*]{1,2}\s*\S/.test(line);
+  }
+  function qzIsAnswerLine(line){
+    return /^(?:answer|correct(?:\s*answer)?)\s*[:\-]\s*\S/i.test(line);
+  }
+  function qzIsNumberedQuestionStart(line){
+    return /^(?:q(?:uestion)?\s*)?\d+\s*[\.\):]\s*\S/i.test(line);
+  }
+  function qzLooksLikeQuestionSentence(line){
+    const text=line.trim();
+    if(!text)return false;
+    if(qzIsLetterOptionLine(text)||qzIsAnswerLine(text))return false;
+    return /[?:：]$/.test(text)||text.split(/\s+/).length>=4;
+  }
+  function qzSplitBulkBlocks(text){
+    const rawLines=String(text||"").replace(/\r\n/g,"\n").split("\n");
+    const blocks=[];
+    let current=[];
+    let sawOptions=false;
+    const flush=()=>{
+      if(current.length)blocks.push(current.slice());
+      current=[];
+      sawOptions=false;
+    };
+    for(const rawLine of rawLines){
+      const line=rawLine.trim();
+      if(!line){
+        if(current.length&&sawOptions)flush();
+        continue;
+      }
+      const numberedStart=qzIsNumberedQuestionStart(line);
+      const possibleNewQuestion=current.length&&sawOptions&&!qzIsLetterOptionLine(line)&&!qzIsAnswerLine(line)&&qzLooksLikeQuestionSentence(line);
+      if((numberedStart&&current.length)||possibleNewQuestion)flush();
+      current.push(line);
+      if(qzIsLetterOptionLine(line))sawOptions=true;
+    }
+    flush();
+    return blocks;
+  }
   function qzParseBulkText(text){
-    const blocks=String(text||"").replace(/\r\n/g,"\n").split(/\n\s*\n+/).map(b=>b.trim()).filter(Boolean);
+    const blocks=qzSplitBulkBlocks(text);
     const out=[];
-    for(const block of blocks){
-      const lines=block.split("\n").map(l=>l.trim()).filter(Boolean);
+    for(const lines of blocks){
       if(!lines.length)continue;
       let promptLine=lines[0].replace(/^(?:q\d*[\.\):]|question\s*\d*[\.\):]|\d+[\.\)])\s*/i,"").trim();
       const options=[];let answerLetter=null,answerText=null,markedIndex=null;
