@@ -8047,20 +8047,45 @@ html,body{overscroll-behavior-y:none}
    sub-dialog (Quiz Mood, Move Question, Sessions, Cancel confirm, Summary,
    etc.) keeps the original compact 560px box. */
 .qz-subdialog-box.qz-addq-wide{width:min(94%,900px)}
-/* Full, clearly-visible outlines throughout the Add New Questions dialog
-   (Destination/Position selects excluded on purpose) — the default
-   var(--line,#dce4ee) border used elsewhere in the app is too pale to read
-   as an outline at all against a white dialog background. */
-.qz-addq-wide .qz-prompt,
-.qz-addq-wide .qz-paste-textarea,
+/* Full, clearly-visible outlines throughout the Add New Questions dialog —
+   the default var(--line,#dce4ee) border used elsewhere in the app is too
+   pale to read as an outline at all against a white dialog background. */
 .qz-addq-wide .qz-points-top input,
-.qz-addq-wide .qz-option-row input[type="text"],
 .qz-addq-wide .qz-explain-wrap textarea{border-color:#6b7280}
 .qz-addq-wide .btn{border:1.5px solid #6b7280}
 .qz-addq-wide .btn.primary{border-color:#1470f5}
+#qzAddQCancel.qz-cancel-transparent{background:transparent}
 .qz-addq-wide .qz-add-opt{border:1.5px dashed #172033}
+/* Kuza: "I want color full, look at outline of single question" — the
+   Single Question card (.qz-single-card) uses a purple-to-teal gradient
+   border via the transparent-border + double-background trick. Applying
+   that same gradient outline (instead of a flat gray one) to Destination/
+   Position, the bulk-paste textareas, the parsed-question preview cards,
+   the "ok" checklist panels, and (per Kuza's follow-up) the Question text
+   box and each Option input on the Single Question tab too, so they all
+   read as fully, vividly outlined like the Bulk paste questions box does.
+   Problem/warning states (qz-bp-warn/qz-bp-danger) keep their own solid
+   orange/red borders. */
+.qz-addq-wide .qz-addq-row2 select,
+.qz-addq-wide .qz-paste-textarea,
+.qz-addq-wide .qz-prompt,
+.qz-addq-wide .qz-option-row input[type="text"],
+.qz-addq-wide .qz-preview-item:not(.qz-bp-warn):not(.qz-bp-danger),
+.qz-addq-wide .qz-bp-panel.ok{
+  border:2px solid transparent;
+  background:linear-gradient(#fff,#fff) padding-box,linear-gradient(135deg,#a86bea,#5fd6e0) border-box;
+}
+/* The correct-answer green tint on a marked option must survive the
+   gradient border above — restore it with a more specific selector rather
+   than relying on :has(), which older iPad Safari versions don't support. */
+.qz-addq-wide .qz-option-row.is-correct input[type="text"]{
+  border:1px solid rgba(31,157,104,.4);
+  background:rgba(31,157,104,.05);
+}
+.qz-addq-wide .qz-bp-panel.ok{color:var(--success,#1f9d68)}
 .qz-addq-wide .qz-answerkey-panel{border:1.5px solid #6b7280}
 .qz-addq-wide .qz-letter-badge:not(.correct){border-color:#6b7280}
+.qz-addq-wide .qz-addq-upload-btn{border:none;background:linear-gradient(135deg,#a86bea,#5fd6e0);color:#fff;font-weight:600}
 .qz-single-card{border:2px solid transparent;border-radius:20px;padding:20px;margin-top:16px;background:linear-gradient(#fff,#fff) padding-box,linear-gradient(135deg,#a86bea,#5fd6e0) border-box;box-shadow:0 14px 32px rgba(20,50,45,.1)}
 
 .qz-page-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px}
@@ -8272,6 +8297,15 @@ html,body{overscroll-behavior-y:none}
 
 .qz-paste-textarea{width:100%;min-height:220px;padding:12px;border-radius:12px;border:1px solid var(--line,#dce4ee);font:12.5px/1.5 ui-monospace,monospace;resize:vertical}
 .qz-paste-hint{font-size:11.5px;color:var(--muted,#768196);margin-top:8px;line-height:1.5}
+.qz-format-guide{display:none;gap:8px;align-items:flex-start;background:var(--blue-soft,#eaf3ff);border-radius:10px;padding:10px 12px;font-size:11.5px;line-height:1.5;color:#2a5aa0;margin-top:8px}
+.qz-format-guide.show{display:flex}
+.qz-format-guide svg{flex-shrink:0;margin-top:2px}
+.qz-format-guide strong{color:#1d4a8a}
+.qz-sa-label-row{display:flex;align-items:center;gap:6px}
+.qz-guide-toggle-btn{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;border:none;background:none;color:#000;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.qz-guide-toggle-btn:hover{color:#444}
+.qz-format-guide .qz-format-example{display:inline-block;max-width:100%;box-sizing:border-box;white-space:pre-wrap;background:rgba(255,255,255,.65);border-radius:6px;padding:3px 7px;font:11px/1.5 ui-monospace,monospace;color:#1d4a8a;vertical-align:top}
+.qz-format-guide .qz-format-line{margin:4px 0}
 .qz-preview-list{display:flex;flex-direction:column;gap:8px;max-height:260px;overflow:auto;padding-right:2px}
 .qz-preview-item{border:1px solid var(--line,#dce4ee);border-radius:10px;padding:9px 11px;font-size:12px}
 .qz-preview-item.needs-review{border-color:rgba(232,163,61,.5);background:#fdf6e9}
@@ -8283,6 +8317,16 @@ html,body{overscroll-behavior-y:none}
 .qz-addq-tab.active{color:var(--blue,#2f80ed);border-bottom-color:var(--blue,#2f80ed)}
 .qz-addq-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .qz-addq-row2 select{padding:8px 10px;border-radius:8px;border:1px solid var(--line,#dce4ee);font-size:12.5px;color:var(--text,#172033);background:var(--panel,#fff)}
+/* Kuza request: everything inside the "+ Add New Questions" dialog becomes
+   17px; Single Question / All Questions (Bulk Paste) tabs, Destination,
+   Position, Bulk paste questions and Bulk paste answer key are bold, all
+   other text in the dialog is regular weight. Scoped to #qzSubDialogBox.qz-addq-wide
+   so it never touches any other dialog that reuses the same box id. */
+#qzSubDialogBox.qz-addq-wide *{font-size:17px;font-weight:400}
+#qzSubDialogBox.qz-addq-wide .qz-addq-tab,
+#qzSubDialogBox.qz-addq-wide .qz-addq-row2 .qz-sa-label,
+#qzSubDialogBox.qz-addq-wide .qz-sa-label-row,
+#qzSubDialogBox.qz-addq-wide .qz-addq-label-bold{font-weight:700}
 .qz-addq-picker{margin-top:10px;border:1px solid var(--line,#dce4ee);border-radius:10px;padding:10px}
 .qz-addq-picker input{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--line,#dce4ee);font-size:12.5px;margin-bottom:8px}
 .qz-addq-picker-list{display:flex;flex-direction:column;gap:4px;max-height:180px;overflow:auto}
@@ -8393,6 +8437,8 @@ html,body{overscroll-behavior-y:none}
 .qz-preview-flag-tag{font-size:10px;font-weight:700;color:#b8752b;background:#fdf1e2;border-radius:10px;padding:2px 7px;margin-left:4px}
 .qz-preview-opt{padding:2px 0 2px 4px;color:var(--muted,#768196)}
 .qz-preview-opt.is-correct{color:var(--success,#1f9d68);font-weight:600}
+.qz-preview-opt-letter{color:#000;font-size:14px;font-weight:700}
+.qz-preview-opt.is-correct .qz-preview-opt-letter{color:var(--success,#1f9d68)}
 
 /* Bulk Paste "full replica" upgrade: summary line, Missing Answers /
    Problem Questions panels with jump navigation, and an editable,
@@ -8580,7 +8626,7 @@ html,body{overscroll-behavior-y:none}
 
 /* Round 3 note 7: per-session settings table (time-limit/shuffle overrides) */
 .qz-sess-table{border:1px solid var(--line,#dce4ee);border-radius:12px;overflow:hidden;font-size:12px}
-.qz-sess-table-head,.qz-sess-row{display:grid;grid-template-columns:1.4fr 1fr 1.2fr 28px;gap:8px;align-items:center;padding:8px 10px}
+.qz-sess-table-head,.qz-sess-row{display:grid;grid-template-columns:1.6fr 1fr 28px;gap:8px;align-items:center;padding:8px 10px}
 .qz-sess-table-head{background:var(--soft,#edf2f8);font-weight:700;color:var(--muted,#768196);font-size:10.5px;text-transform:uppercase;letter-spacing:.03em}
 .qz-sess-row{border-top:1px solid var(--line,#dce4ee)}
 /* Round 4 note 8: session name plus its question range and total, e.g.
@@ -9040,7 +9086,7 @@ html,body{overscroll-behavior-y:none}
      "Question 47:") appears, or wherever a question-shaped sentence follows
      a block that already has options — blank lines are still honored too. */
   function qzIsLetterOptionLine(line){
-    return /^[*✓]?\s*[A-Za-z]\s*[\.\):\-\],*]{1,2}\s*\S/.test(line);
+    return /^[*✓]?\s*[\(\[]?\s*[A-Za-z]\s*[\.\):\-\],*;\/]{1,2}\s*\S/.test(line);
   }
   function qzIsAnswerLine(line){
     return /^(?:answer|correct(?:\s*answer)?)\s*[:\-]\s*\S/i.test(line);
@@ -9091,11 +9137,13 @@ html,body{overscroll-behavior-y:none}
         const ansMatch=line.match(/^(?:answer|correct(?:\s*answer)?)\s*[:\-]\s*(.+)$/i);
         if(ansMatch){
           const v=ansMatch[1].trim();
+          const letterPrefixMatch=v.match(/^([A-Za-z])\s*[\.\):\-]\s*(.*)$/);
           if(/^[A-Za-z]$/.test(v))answerLetter=v.toUpperCase();
+          else if(letterPrefixMatch)answerLetter=letterPrefixMatch[1].toUpperCase();
           else answerText=v;
           continue;
         }
-        const optMatch=line.match(/^([*✓]?)\s*([A-Za-z])\s*[\.\):\-\],*]{1,2}\s*(.+)$/);
+        const optMatch=line.match(/^([*✓]?)\s*[\(\[]?\s*([A-Za-z])\s*[\.\):\-\],*;\/]{1,2}\s*(.+)$/);
         if(optMatch){
           const marked=!!optMatch[1]||/[*✓]\s*$/.test(line)||/\(correct\)\s*$/i.test(optMatch[3]);
           const cleanText=optMatch[3].replace(/\s*\(correct\)\s*$/i,"").trim();
@@ -9294,15 +9342,35 @@ html,body{overscroll-behavior-y:none}
      multi-select question), a Parse & Preview step that shows every parsed
      question with its options and marks anything that still needs review,
      and an Import All step. */
+  /* Answer key box accepts three shapes per line, tried in this order so a
+     normal multi-select line is never misread as two separate entries:
+       1. One question per line — "1. A", "Q1 Answer: A", "3. C, D" (multi).
+       2. A compact list packed onto one line — "1.A,2.B,3.C" or with ";" —
+          only tried when #1 fails to match the WHOLE line, so "3. C, D"
+          (one number, two letters) is never split into two entries here.
+       3. A bare letter with no number at all — matched to "the next
+          question in order" by its position among lines written this way
+          (for a source that just lists answers in a row, unnumbered). */
   function qzParseAnswerKey(text){
     const map=new Map();
-    String(text||"").replace(/\r\n/g,"\n").split("\n").forEach(line=>{
-      const m=line.trim().match(/^(?:q(?:uestion)?\s*)?(\d+)\s*[\.\)\-:]?\s*(?:answer\s*[:\-]?\s*)?([A-Za-z](?:\s*[,\/]\s*[A-Za-z])*)\s*$/i);
-      if(!m)return;
-      const num=Number(m[1]);
-      const letters=m[2].split(/[,\/]/).map(s=>s.trim().toUpperCase()).filter(Boolean);
+    let positionalNext=1;
+    const wholeLineRe=/^(?:q(?:uestion)?\s*)?(\d+)\s*[\.\)\-:]?\s*(?:(?:answer|correct)\s*[:\-]?\s*)?([A-Za-z](?:\s*[,\/]\s*[A-Za-z])*)\s*$/i;
+    const pairRe=/(?:q(?:uestion)?\s*)?(\d+)\s*[\.\)\-:]?\s*(?:(?:answer|correct)\s*[:\-]?\s*)?([A-Za-z])/gi;
+    const bareRe=/^(?:(?:answer|correct)\s*[:\-]?\s*)?([A-Za-z](?:\s*[,\/]\s*[A-Za-z])*)\s*$/i;
+    const setLetters=(num,letterGroup)=>{
+      const letters=letterGroup.split(/[,\/]/).map(s=>s.trim().toUpperCase()).filter(Boolean);
       const indices=letters.map(l=>l.charCodeAt(0)-65);
       if(num&&indices.length)map.set(num,indices);
+    };
+    String(text||"").replace(/\r\n/g,"\n").split("\n").forEach(rawLine=>{
+      const line=rawLine.trim();
+      if(!line)return;
+      const whole=line.match(wholeLineRe);
+      if(whole){setLetters(Number(whole[1]),whole[2]);return}
+      const pairs=[...line.matchAll(pairRe)];
+      if(pairs.length>=2){pairs.forEach(p=>setLetters(Number(p[1]),p[2]));return}
+      const bare=line.match(bareRe);
+      if(bare){setLetters(positionalNext,bare[1]);positionalNext++}
     });
     return map;
   }
@@ -9430,8 +9498,8 @@ html,body{overscroll-behavior-y:none}
     function singleTabHtml(){
       return `<div class="qz-single-card">
         <div style="display:flex;justify-content:flex-end"><label class="qz-points-top">Points<input type="number" id="qzAqPoints" min="0" step="1" value="${sPoints}"></label></div>
-        <label class="qz-sa-label">Question text<textarea id="qzAqPrompt" class="qz-prompt" style="min-height:56px" placeholder="Type or paste the question…">${esc(sPrompt)}</textarea></label>
-        <label class="qz-sa-label" style="margin-top:10px">Bulk paste options<textarea id="qzAqBulkOpt" class="qz-paste-textarea" style="min-height:88px" placeholder="A.
+        <label class="qz-sa-label qz-addq-label-bold">Question text<textarea id="qzAqPrompt" class="qz-prompt" style="min-height:220px" placeholder="Type or paste the question…">${esc(sPrompt)}</textarea></label>
+        <label class="qz-sa-label qz-addq-label-bold" style="margin-top:10px">Bulk paste options<textarea id="qzAqBulkOpt" class="qz-paste-textarea" placeholder="A.
 B.
 C.
 D."></textarea></label>
@@ -9510,7 +9578,7 @@ D."></textarea></label>
       let body="";
       if(item.type==="mcq"){
         const opts=(item.options||[]).map(qzNormOpt);
-        const optsList=opts.map((o,oi)=>`<div class="qz-preview-opt ${qzIsMultiIdx(item,oi)?"is-correct":""}">${qzLetter(oi)}. ${esc(o.text)}</div>`).join("");
+        const optsList=opts.map((o,oi)=>`<div class="qz-preview-opt ${qzIsMultiIdx(item,oi)?"is-correct":""}"><span class="qz-preview-opt-letter">${qzLetter(oi)}.</span> ${esc(o.text)}</div>`).join("");
         const answerControl=item.allow_multiple?
           `<div class="qz-bp-tick-list">${opts.map((o,oi)=>`<label class="qz-bp-tick-row"><input type="checkbox" class="qz-bp-tick" data-bulk-index="${index}" data-opt-index="${oi}" ${qzIsMultiIdx(item,oi)?"checked":""}>${qzLetter(oi)} — ${esc(o.text)}</label>`).join("")}</div>`
           :`<select class="qz-bp-answer-select" data-bulk-index="${index}"><option value="" ${item._needsReview?"selected":""} disabled hidden>Choose the correct option…</option>${opts.map((o,oi)=>`<option value="${oi}" ${!item._needsReview&&Number(item.correct_answer)===oi?"selected":""}>${qzLetter(oi)} — ${esc(o.text)}</option>`).join("")}</select>`;
@@ -9565,23 +9633,73 @@ D."></textarea></label>
           </div>
         </div>`:`<div class="qz-bp-panel ok">✓ No question-format problems.</div>`;
       const items=bulkParsed.map((q,i)=>bulkPreviewItemHtml(q,i)).join("");
-      return `${summary}${missingPanel}${problemPanel}<div class="qz-paste-hint" style="margin:10px 0 4px">Parsed Questions Preview</div><div class="qz-preview-list" style="max-height:340px">${items}</div>`;
+      return `${summary}${missingPanel}${problemPanel}<div class="qz-paste-hint qz-addq-label-bold" style="margin:10px 0 4px">Parsed Questions Preview</div><div class="qz-preview-list" style="max-height:340px">${items}</div>`;
     }
-    function bulkTabHtml(){
-      return `<label class="qz-sa-label">Bulk paste questions<textarea id="qzAqBulkArea" class="qz-paste-textarea" placeholder="Which of the following is the most common cause of pneumonia?
-A) Streptococcus pneumoniae
-B) Haemophilus influenzae
-Answer: A
-
-Next question...">${esc(bulkText)}</textarea></label>
-        <div class="qz-paste-hint">One blank line between questions. List lettered options and mark the correct one with <strong>Answer: A</strong> (or a * before it) — or use the Answer Key box below. Two True/False options become a True/False question; no options becomes short-answer.</div>
-        <div class="qz-addq-row2" style="margin-top:8px;align-items:flex-end">
-          <label class="qz-sa-label" style="flex:1">Bulk paste answer key (optional)<textarea id="qzAqKeyArea" class="qz-paste-textarea" style="min-height:64px" placeholder="1. A
-2) C">${esc(keyText)}</textarea></label>
+    function bulkTabHtml(submitLabel,submitDisabled){
+      const guideIcon=`<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.3"/><path d="M12 7v6.2"/><circle cx="12" cy="16.7" r="0.9" fill="currentColor" stroke="none"/></svg>`;
+      return `<div class="qz-sa-label-row" style="margin-bottom:10px">
           <input type="file" id="qzAqUploadFile" accept=".txt,.csv,text/plain,text/csv" style="display:none">
-          <button type="button" id="qzAqUploadBtn" class="btn" style="flex-shrink:0">Upload .txt/.csv</button>
+          <button type="button" id="qzAqUploadBtn" class="btn qz-addq-upload-btn">Upload file txt</button>
+          <button type="button" class="qz-guide-toggle-btn" id="qzUploadGuideBtn" aria-label="Show format guide">${guideIcon}</button>
         </div>
-        <div class="form-actions" style="margin-top:10px"><button id="qzAqParse" class="btn">Apply Answer Key &amp; Preview</button></div>
+        <div class="qz-format-guide" id="qzUploadGuide" style="margin:-4px 0 10px"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.01"/></svg><span>
+<div class="qz-format-line">Upload a .txt or .csv file formatted just like the Bulk paste questions box below — it's loaded straight in, so the same rules apply. Example:</div>
+<div class="qz-format-line"><span class="qz-format-example">1. A patient with chronic left ventricular failure is most likely to develop which complication?
+A. Peripheral arterial thrombosis
+B. Pulmonary edema
+C. Splenomegaly
+D. Ascites only
+E. Polycythemia
+Answer: B. Pulmonary edema
+
+2. The normal adult resting heart rate is approximately:
+A. 20–40/min
+B. 40–50/min
+C. 60–100/min
+Answer: C. 60–100/min</span></div>
+<div class="qz-format-line">Numbered question, lettered options, then an "Answer: (letter)" or "Answer: (letter). (full text)" line. A blank line between questions is optional.</div>
+</span></div>
+        <label class="qz-sa-label"><span class="qz-sa-label-row">Bulk paste questions<button type="button" class="qz-guide-toggle-btn" id="qzBulkGuideBtn" aria-label="Show format guide">${guideIcon}</button></span>
+        <div class="qz-format-guide" id="qzBulkGuide"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.01"/></svg><span>
+<div class="qz-format-line">Any of these option styles work:</div>
+<div class="qz-format-line"><span class="qz-format-example">A)  A.  A:  A-  (A)  [A]  A;  A/</span></div>
+<div class="qz-format-line">Mark the correct one with any one of:</div>
+<div class="qz-format-line"><span class="qz-format-example">Answer: A</span> — a line after the options</div>
+<div class="qz-format-line"><span class="qz-format-example">*A) Option</span> — a * or ✓ right before the correct one</div>
+<div class="qz-format-line"><span class="qz-format-example">A) Option (correct)</span> — or written right after it</div>
+<div class="qz-format-line">Blank lines between questions are optional — a new numbered line (1. / 2. / Q3.) starts the next one. Two True/False options become a True/False question; no options becomes short-answer.</div>
+</span></div>
+        <textarea id="qzAqBulkArea" class="qz-paste-textarea" placeholder="Question 1: What is...?
+A- Option
+B. Option
+C) Option
+D: Option
+
+2) Another question?
+a. Option
+b. Option
+c. Option">${esc(bulkText)}</textarea></label>
+        <label class="qz-sa-label" style="margin-top:12px"><span class="qz-sa-label-row">Bulk paste answer key (optional)<button type="button" class="qz-guide-toggle-btn" id="qzKeyGuideBtn" aria-label="Show format guide">${guideIcon}</button></span>
+          <div class="qz-format-guide" id="qzKeyGuide"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.01"/></svg><span>
+<div class="qz-format-line"><span class="qz-format-example">1. A
+2) C
+3. B, D</span> — one per line (commas/slashes = more than one correct answer)</div>
+<div class="qz-format-line"><span class="qz-format-example">1.A, 2.B, 3.C</span> — or packed onto one line</div>
+<div class="qz-format-line"><span class="qz-format-example">B
+A
+C</span> — or just the bare letters, no numbers, matched to the questions in order</div>
+</span></div>
+          <textarea id="qzAqKeyArea" class="qz-paste-textarea" placeholder="1.a
+2.c
+3 - d
+4) E
+Q5 Answer B
+6: correct C">${esc(keyText)}</textarea></label>
+        <div class="form-actions" style="margin-top:10px">
+          <button id="qzAqParse" class="btn">Apply Answer Key &amp; Preview</button>
+          <button id="qzAddQCancel" class="btn qz-cancel-transparent">Cancel</button>
+          <button id="qzAddQSubmit" class="btn primary" ${submitDisabled?"disabled":""}>${esc(submitLabel)}</button>
+        </div>
         <div id="qzAqPreview" style="margin-top:10px">${bulkPreviewHtml()}</div>`;
     }
     function render(){
@@ -9609,8 +9727,8 @@ Next question...">${esc(bulkText)}</textarea></label>
           </select></label>
         </div>
         ${positionPickerHtml()}
-        <div id="qzAddQBody" style="margin-top:12px">${tab==="single"?singleTabHtml():bulkTabHtml()}</div>
-        <div class="form-actions" style="margin-top:14px"><button id="qzAddQCancel" class="btn">Cancel</button><button id="qzAddQSubmit" class="btn primary" ${submitDisabled?"disabled":""}>${esc(submitLabel)}</button></div>
+        <div id="qzAddQBody" style="margin-top:12px">${tab==="single"?singleTabHtml():bulkTabHtml(submitLabel,submitDisabled)}</div>
+        ${tab==="single"?`<div class="form-actions" style="margin-top:14px"><button id="qzAddQCancel" class="btn">Cancel</button><button id="qzAddQSubmit" class="btn primary" ${submitDisabled?"disabled":""}>${esc(submitLabel)}</button></div>`:""}
       `);
       document.getElementById("qzSubDialogBox").classList.add("qz-addq-wide");
       wire();
@@ -9743,6 +9861,10 @@ Next question...">${esc(bulkText)}</textarea></label>
       if(applied)toast(`Answer key applied to ${applied} question${applied===1?"":"s"}`);
     }
     function wireBulk(){
+      /* Upload file txt/csv only exists on this tab now (Kuza: "show only
+         when click all question"), so it's wired here instead of the
+         shared wire(). It loads straight into the bulk questions box, same
+         as before. */
       document.getElementById("qzAqUploadBtn").onclick=()=>document.getElementById("qzAqUploadFile").click();
       document.getElementById("qzAqUploadFile").onchange=event=>{
         const file=event.target.files&&event.target.files[0];
@@ -9751,7 +9873,7 @@ Next question...">${esc(bulkText)}</textarea></label>
         const reader=new FileReader();
         reader.onload=()=>{
           bulkText=String(reader.result||"");
-          keyText=document.getElementById("qzAqKeyArea").value;
+          const k=document.getElementById("qzAqKeyArea");if(k)keyText=k.value;
           bulkParsed=qzParseBulkText(bulkText);
           bulkMissingCursor=0;bulkProblemCursor=0;
           const applied=bulkParsed.length?qzApplyKeyToParsed():0;
@@ -9761,6 +9883,15 @@ Next question...">${esc(bulkText)}</textarea></label>
         reader.onerror=()=>toast("Couldn't read that file");
         reader.readAsText(file);
       };
+      document.getElementById("qzUploadGuideBtn").onclick=event=>{event.preventDefault();document.getElementById("qzUploadGuide").classList.toggle("show")};
+      const qzToggleBothGuides=()=>{
+        const bulkGuide=document.getElementById("qzBulkGuide"),keyGuide=document.getElementById("qzKeyGuide");
+        const show=!bulkGuide.classList.contains("show");
+        bulkGuide.classList.toggle("show",show);
+        keyGuide.classList.toggle("show",show);
+      };
+      document.getElementById("qzBulkGuideBtn").onclick=event=>{event.preventDefault();qzToggleBothGuides()};
+      document.getElementById("qzKeyGuideBtn").onclick=event=>{event.preventDefault();qzToggleBothGuides()};
       document.getElementById("qzAqParse").onclick=qzParseAndApplyKey;
       wireBulkPreview();
     }
@@ -10242,44 +10373,88 @@ Next question...">${esc(bulkText)}</textarea></label>
     let qs=questions.map(q=>({...q}));
     let overrides={...(settings.session_overrides||{})};
     let pendingNames=[];
+    /* Kuza's redesign (round 6): the "Add new session" panel now mirrors the
+       Add New Questions dialog's own Destination/Position/Choose Question
+       pattern instead of plain "from/to" number boxes — Destination picks
+       the pool of questions to search, Position picks a direction (from the
+       beginning up to the chosen question, or from it to the end), and
+       Choose Question is the same searchable picker. Naming + assigning the
+       range now happens together in one "+ Add" action. */
+    let rangeDestination="";
+    let rangePosition="begin_to";
+    let rangeRefId=null;
+    let rangeQuery="";
+    let pendingRangeName="";
+    function syncRangeNameFromDom(){const n=document.getElementById("qzSessNewName");if(n)pendingRangeName=n.value}
     function renderDialog(){
       const names=[...new Set([...qzSessionNames(qs),...pendingNames])];
+      function sessPickerHtml(){
+        const scope=qzScopeIndices(qs,rangeDestination);
+        const q=rangeQuery.trim().toLowerCase();
+        const matches=scope.filter(i=>{
+          const num=String(i+1);
+          const prompt=(qs[i].prompt||"").toLowerCase();
+          return !q||num===q||num.includes(q)||prompt.includes(q);
+        }).slice(0,60);
+        return `<div class="qz-addq-picker">
+          <input type="text" id="qzSessPickerSearch" placeholder="Search by question number or text…" value="${esc(rangeQuery)}">
+          <div class="qz-addq-picker-list">${matches.length?matches.map(i=>`<button type="button" class="qz-addq-picker-row ${rangeRefId===qs[i].id?"active":""}" data-refid="${esc(qs[i].id)}">${i+1}. ${esc((qs[i].prompt||"(untitled)").slice(0,70))}</button>`).join(""):'<div class="qz-paste-hint">No matching questions.</div>'}</div>
+        </div>`;
+      }
       qzOpenSubDialog(`
         <h3 style="margin:0 0 10px">Sessions</h3>
         <div class="qz-paste-hint" style="margin-bottom:10px">Split this quiz's questions into smaller named sessions. Sessions are just optional question groups — whenever any exist, students can freely pick All Questions or any one session, in any order.</div>
 
-        <div class="qz-editor-questions-head" style="margin:16px 0 6px"><strong>Auto-split</strong></div>
-        <div class="qz-session-manage-row"><span style="flex-shrink:0;color:var(--muted,#768196)">Questions per session</span><input type="number" min="1" id="qzSessSplitCount" value="5" style="max-width:64px;text-align:center"><button type="button" id="qzSessSplitBtn" class="btn" style="font-size:11.5px;padding:6px 10px;flex-shrink:0">Split into sessions</button></div>
+        <div class="qz-editor-questions-head" style="margin:16px 0 6px"><strong>Auto-split sessions</strong></div>
+        <div class="qz-addq-row2">
+          <label class="qz-sa-label">Questions per session<input type="number" min="1" id="qzSessSplitCount" placeholder="e.g. 5"></label>
+          <label class="qz-sa-label">Number of sessions<input type="number" min="1" id="qzSessSplitSessions" placeholder="e.g. 4"></label>
+        </div>
+        <div class="qz-paste-hint" style="margin:6px 0">Fill in either one — if both are filled, Number of sessions is used.</div>
+        <button type="button" id="qzSessSplitBtn" class="btn primary">Split into sessions</button>
 
-        <div class="qz-editor-questions-head" style="margin:16px 0 6px"><strong>New session / bulk-assign a range</strong></div>
-        <div class="qz-session-manage-row"><input type="text" id="qzSessNewName" placeholder="New session name, e.g. Session 1"><button type="button" id="qzSessAdd" class="btn" style="font-size:11.5px;padding:6px 10px;flex-shrink:0">+ Add</button></div>
-        ${qs.length?`<div class="qz-session-manage-row" style="margin-top:8px"><span style="flex-shrink:0;color:var(--muted,#768196)">Questions</span><input type="number" min="1" max="${qs.length}" id="qzSessRangeFrom" value="1" style="max-width:52px;text-align:center"><span style="flex-shrink:0">to</span><input type="number" min="1" max="${qs.length}" id="qzSessRangeTo" value="${qs.length}" style="max-width:52px;text-align:center"><span style="flex-shrink:0">→</span><select id="qzSessRangeTarget" style="flex:1">${names.length?names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join(""):'<option value="">Add a session name first</option>'}</select><button type="button" id="qzSessRangeApply" class="btn" style="font-size:11.5px;padding:6px 10px;flex-shrink:0" ${names.length?"":"disabled"}>Assign</button></div>`:""}
+        <div class="qz-editor-questions-head" style="margin:20px 0 6px"><strong>Add new session</strong></div>
+        <div class="qz-sessadd-panel">
+          <label class="qz-sa-label" style="display:block">Session name
+            <div class="qz-session-manage-row" style="margin-top:6px"><input type="text" id="qzSessNewName" placeholder="e.g. Session 1" value="${esc(pendingRangeName)}"><button type="button" id="qzSessAdd" class="btn primary" style="flex-shrink:0">+ Add</button></div>
+          </label>
+          ${qs.length?`
+          <div class="qz-addq-row2" style="margin-top:12px">
+            <label class="qz-sa-label">Destination<select id="qzSessRangeDest">${qzDestinationOptions(qs).map(o=>`<option value="${esc(o.value)}" ${rangeDestination===o.value?"selected":""}>${esc(o.label)}</option>`).join("")}</select></label>
+            <label class="qz-sa-label">Position<select id="qzSessRangePos">
+              <option value="begin_to" ${rangePosition==="begin_to"?"selected":""}>From Beginning to this question</option>
+              <option value="to_end" ${rangePosition==="to_end"?"selected":""}>From this question to End</option>
+            </select></label>
+          </div>
+          <label class="qz-sa-label" style="display:block;margin-top:10px">Choose Question</label>
+          ${sessPickerHtml()}
+          <div class="qz-paste-hint" style="margin-top:6px">Naming and picking a question here is optional — leave the picker unset to just add an empty session name, or fill it in to assign that range to it right away.</div>`:""}
+        </div>
 
-        ${names.length?`<div class="qz-editor-questions-head" style="margin:16px 0 6px"><strong>Per-session settings</strong></div><div class="qz-sess-table"><div class="qz-sess-table-head"><span>Session</span><span>Total questions</span><span>Shuffle</span><span></span></div>${names.map(n=>{
-          const ov=overrides[n]||{};
+        ${names.length?`<div class="qz-editor-questions-head" style="margin:16px 0 6px"><strong>Per-session settings</strong></div><div class="qz-sess-table"><div class="qz-sess-table-head"><span>Session</span><span>Total questions</span><span></span></div>${names.map(n=>{
           const rangeLabel=qzSessionRangeLabel(qs,n)||`${qs.filter(q=>q.session_label===n).length} questions`;
-          return `<div class="qz-sess-row" data-sess="${esc(n)}"><span class="qz-sess-row-name">${esc(n)}</span><span class="qz-sess-row-total">${esc(rangeLabel)}</span><select class="qz-sess-shuffle" data-sess="${esc(n)}"><option value="" ${ov.shuffle_mode?"":"selected"}>Quiz default</option>${QZ_SHUFFLE_MODES.map(m=>`<option value="${m}" ${ov.shuffle_mode===m?"selected":""}>${QZ_SHUFFLE_LABELS[m]}</option>`).join("")}</select><button type="button" class="qz-sess-remove" data-sess="${esc(n)}" aria-label="Remove session ${esc(n)}">✕</button></div>`;
+          return `<div class="qz-sess-row" data-sess="${esc(n)}"><span class="qz-sess-row-name">${esc(n)}</span><span class="qz-sess-row-total">${esc(rangeLabel)}</span><button type="button" class="qz-sess-remove" data-sess="${esc(n)}" aria-label="Remove session ${esc(n)}">✕</button></div>`;
         }).join("")}</div>`:""}
 
         <div class="qz-editor-questions-head" style="margin:16px 0 6px"><strong>Assign questions</strong></div>
         <div>${qs.map((q,i)=>`<div class="qz-session-q-row"><span>${i+1}.</span><span class="qz-session-q-prompt">${esc(q.prompt||"(untitled question)")}</span><select class="qz-sess-assign" data-qidx="${i}"><option value="">All Questions</option>${names.map(n=>`<option value="${esc(n)}" ${q.session_label===n?"selected":""}>${esc(n)}</option>`).join("")}</select></div>`).join("")||'<div class="qz-paste-hint">Add questions to this quiz first.</div>'}
         <div class="form-actions" style="margin-top:16px"><button id="qzSessCancel" class="btn">Cancel</button><button id="qzSessSave" class="btn primary">Save</button></div>
       `);
+      document.getElementById("qzSubDialogBox").classList.add("qz-addq-wide");
       function syncAssignFromDom(){document.querySelectorAll(".qz-sess-assign").forEach(sel=>{qs[Number(sel.dataset.qidx)].session_label=sel.value||null})}
-      function syncOverridesFromDom(){
-        document.querySelectorAll(".qz-sess-shuffle").forEach(el=>{
-          const n=el.dataset.sess;
-          if(!overrides[n])overrides[n]={};
-          overrides[n].shuffle_mode=el.value||null;
-        });
-      }
       document.getElementById("qzSessCancel").onclick=qzCloseSubDialog;
       document.getElementById("qzSessSplitBtn").onclick=()=>{
         if(!qs.length)return;
         if(qzSessionNames(qs).length&&!confirm("This replaces the current session assignments. Continue?"))return;
-        const perSession=Math.max(1,Number(document.getElementById("qzSessSplitCount").value)||1);
+        const perSessionInput=Math.max(0,Number(document.getElementById("qzSessSplitCount").value)||0);
+        const numSessionsInput=Math.max(0,Number(document.getElementById("qzSessSplitSessions").value)||0);
+        let perSession;
+        if(numSessionsInput>0)perSession=Math.ceil(qs.length/numSessionsInput);
+        else if(perSessionInput>0)perSession=perSessionInput;
+        else{toast("Enter questions per session, or number of sessions");return}
         pendingNames=[];
         overrides={};
+        rangeRefId=null;rangeQuery="";pendingRangeName="";
         qs.forEach((q,i)=>{q.session_label=`Session ${Math.floor(i/perSession)+1}`});
         toast(`Split into ${Math.ceil(qs.length/perSession)} session${Math.ceil(qs.length/perSession)===1?"":"s"}`);
         renderDialog();
@@ -10289,26 +10464,31 @@ Next question...">${esc(bulkText)}</textarea></label>
         const name=input.value.trim();
         if(!name)return;
         syncAssignFromDom();
-        syncOverridesFromDom();
         if(!names.includes(name))pendingNames.push(name);
+        if(rangeRefId&&qs.length){
+          const scope=qzScopeIndices(qs,rangeDestination);
+          const anchorPos=scope.indexOf(qs.findIndex(q=>q.id===rangeRefId));
+          if(anchorPos>=0){
+            const targetIdxs=rangePosition==="to_end"?scope.slice(anchorPos):scope.slice(0,anchorPos+1);
+            targetIdxs.forEach(i=>{qs[i].session_label=name});
+            toast(`"${name}" added — ${targetIdxs.length} question${targetIdxs.length===1?"":"s"} assigned`);
+          }
+        }else{
+          toast(`"${name}" added`);
+        }
+        rangeRefId=null;rangeQuery="";pendingRangeName="";
         renderDialog();
       };
-      const rangeApply=document.getElementById("qzSessRangeApply");
-      if(rangeApply)rangeApply.onclick=()=>{
-        const target=document.getElementById("qzSessRangeTarget").value;
-        if(!target)return;
-        syncAssignFromDom();
-        let from=Math.max(1,Number(document.getElementById("qzSessRangeFrom").value)||1);
-        let to=Math.min(qs.length,Number(document.getElementById("qzSessRangeTo").value)||qs.length);
-        if(from>to)[from,to]=[to,from];
-        for(let i=from-1;i<to;i++)qs[i].session_label=target;
-        toast(`Questions ${from}–${to} assigned to ${target}`);
-        renderDialog();
-      };
+      const destSel=document.getElementById("qzSessRangeDest");
+      if(destSel)destSel.onchange=()=>{syncRangeNameFromDom();rangeDestination=destSel.value;rangeRefId=null;renderDialog()};
+      const posSel=document.getElementById("qzSessRangePos");
+      if(posSel)posSel.onchange=()=>{rangePosition=posSel.value};
+      const pickerSearch=document.getElementById("qzSessPickerSearch");
+      if(pickerSearch)pickerSearch.oninput=()=>{syncRangeNameFromDom();rangeQuery=pickerSearch.value;renderDialog()};
+      document.querySelectorAll(".qz-addq-picker-row").forEach(b=>{b.onclick=()=>{syncRangeNameFromDom();rangeRefId=b.dataset.refid;renderDialog()}});
       document.querySelectorAll(".qz-sess-remove").forEach(btn=>{
         btn.onclick=()=>{
           syncAssignFromDom();
-          syncOverridesFromDom();
           const n=btn.dataset.sess;
           if(!confirm(`Remove "${n}"? Questions assigned to it become unassigned.`))return;
           qs.forEach(q=>{if(q.session_label===n)q.session_label=null});
@@ -10320,12 +10500,8 @@ Next question...">${esc(bulkText)}</textarea></label>
       document.querySelectorAll(".qz-sess-assign").forEach(sel=>{
         sel.onchange=()=>{qs[Number(sel.dataset.qidx)].session_label=sel.value||null};
       });
-      document.querySelectorAll(".qz-sess-shuffle").forEach(el=>{
-        el.onchange=syncOverridesFromDom;
-      });
       document.getElementById("qzSessSave").onclick=()=>{
         syncAssignFromDom();
-        syncOverridesFromDom();
         const finalNames=qzSessionNames(qs);
         const finalOverrides={};
         finalNames.forEach(n=>{if(overrides[n])finalOverrides[n]=overrides[n]});
@@ -10517,8 +10693,9 @@ Next question...">${esc(bulkText)}</textarea></label>
   }
   /* Round 5 note 8: the thin "+ Add question here" divider between cards
      (afterIdx=-1 renders above the first card, i.e. "Beginning"; afterIdx=N-1
-     after the last card is "End"). Clicking one opens the same Add New
-     Questions dialog used everywhere else, pre-aimed at that exact spot. */
+     after the last card is "End"). Clicking one no longer opens the Add New
+     Questions dialog (Kuza: it should be "separate from any button") — it
+     directly splices in a blank question via qzInsertBlankQuestionHere. */
   function qzInsertDividerHtml(afterIdx){
     return `<button type="button" class="qz-insert-divider" data-after-idx="${afterIdx}"><span class="qz-insert-divider-line"></span><span class="qz-insert-divider-label">+ Add question here</span><span class="qz-insert-divider-line"></span></button>`;
   }
@@ -11139,14 +11316,35 @@ Next question...">${esc(bulkText)}</textarea></label>
       card.classList.add("qz-just-inserted");
       setTimeout(()=>card.classList.remove("qz-just-inserted"),1800);
     }
+    /* Kuza: the "+ Add question here" divider looked like a lightweight,
+       inline control but opened the same big Add New Questions dialog as
+       every other add button — "it's supposed to be separate from any
+       button". Now it skips the dialog entirely: it splices a blank MCQ
+       question straight into the array at that exact spot, re-renders,
+       scrolls/highlights it exactly like the dialog path did, and focuses
+       its prompt textarea so she can start typing immediately. */
+    function qzInsertBlankQuestionHere(afterIdx){
+      const anchor=afterIdx>=0?questions[afterIdx]:questions[0];
+      const q=qzNewQuestion("mcq","",1);
+      q.session_label=anchor?anchor.session_label||null:null;
+      const insertAt=afterIdx+1;
+      questions.splice(insertAt,0,q);
+      rerenderQuestions();
+      qzHighlightAndScrollToIdx(insertAt);
+      qzMarkUnsaved();
+      requestAnimationFrame(()=>{
+        const promptEl=document.querySelector(`.qz-question-card[data-qidx="${insertAt}"] .qz-prompt`);
+        if(promptEl)promptEl.focus();
+      });
+    }
     /* Round 5 note 2/8/9: one merged "+ Add New Questions" entry point
        (Single/Bulk tabs, destination + position, same parsers as before)
        replacing the old separate Paste All / Paste Single / Upload buttons
-       — reachable from the top toolbar, the bottom smart action bar, every
-       "+ Add question here" divider, and every card's ⋯ menu. Defined once
-       at the same outer scope as rerenderQuestions (not re-created inside
-       renderShell) so the click-delegation handler below — set up once,
-       outside renderShell — can also reach it. */
+       — reachable from the top toolbar, the bottom smart action bar, and
+       every card's ⋯ menu. Defined once at the same outer scope as
+       rerenderQuestions (not re-created inside renderShell) so the
+       click-delegation handler below — set up once, outside renderShell —
+       can also reach it. */
     function qzOpenAddNewQuestions(presetOpts){
       openAddNewQuestionsDialog(questions,(inserted,insertAt)=>{
         rerenderQuestions();
@@ -11227,9 +11425,7 @@ Next question...">${esc(bulkText)}</textarea></label>
       const list=listEl();if(!list||!list.contains(event.target))return handleGlobalActions(event);
       const divider=event.target.closest(".qz-insert-divider");
       if(divider){
-        const afterIdx=Number(divider.dataset.afterIdx);
-        const anchor=afterIdx>=0?questions[afterIdx]:questions[0];
-        qzOpenAddNewQuestions(afterIdx>=0?{position:"after",refId:anchor.id,destination:anchor.session_label||""}:{position:"beginning",destination:anchor?anchor.session_label||"":""});
+        qzInsertBlankQuestionHere(Number(divider.dataset.afterIdx));
         return;
       }
       const qcMenuBtn=event.target.closest(".qz-qcard-menu-btn");
