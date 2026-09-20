@@ -8057,7 +8057,21 @@ setTimeout(async()=>{try{if(state.isAdmin&&!(await service.isAdminDeviceAllowed(
 /* Note 1 (round 2): true full screen for the take-quiz journey — no boxed
    card, no padding around it, at any screen size. */
 .qz-page-overlay.qz-fullscreen{padding:0!important;align-items:stretch!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-.qz-page-overlay.qz-fullscreen .qz-page-box{width:100%;max-width:none!important;min-height:100vh!important;max-height:none!important;margin:0!important;border-radius:0!important;box-shadow:none!important;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;background:#f4f7fb}
+/* Kuza reported that on iPad (any portrait iPad reports a CSS width under
+   the 860px breakpoint used everywhere else in this file), a long question
+   list "wasn't frozen but some functions didn't work" -- the "..." menu,
+   the Add New Questions dialog, and scrolling itself. Root cause: the
+   generic ".overlay.show{overflow:hidden!important}" rule (meant to stop
+   the page behind a modal from scrolling) clips this fullscreen box's
+   ancestor on every screen size, but this box only got its OWN scroll
+   ability (overflow:auto) in the >=860px branch above. Below that width,
+   min-height:100vh let the box grow to fit all 1000+ questions (500,000+px
+   tall) with nothing able to scroll to reach any of it -- so anything
+   below the first screenful was simply unreachable, not slow. Capping the
+   box at exactly one screen tall and giving it its own scroll (matching
+   the -webkit-overflow-scrolling/overscroll-behavior already set below,
+   which had no effect without this) fixes that on every screen size. */
+.qz-page-overlay.qz-fullscreen .qz-page-box{width:100%;max-width:none!important;height:100vh!important;max-height:none!important;overflow-y:auto!important;margin:0!important;border-radius:0!important;box-shadow:none!important;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;background:#f4f7fb}
 html,body{overscroll-behavior-y:none}
 .qz-subdialog-overlay{z-index:230!important}
 .qz-subdialog-box{width:min(100%,560px);max-height:88vh;overflow:auto;background:var(--panel,#fff);border-radius:18px;padding:22px;box-shadow:0 24px 72px rgba(18,25,38,.25)}
