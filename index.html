@@ -8047,6 +8047,11 @@ html,body{overscroll-behavior-y:none}
    sub-dialog (Quiz Mood, Move Question, Sessions, Cancel confirm, Summary,
    etc.) keeps the original compact 560px box. */
 .qz-subdialog-box.qz-addq-wide{width:min(94%,900px)}
+/* Full-screen variant used only by "+ Add New Questions": the overlay
+   loses its dim/blur backdrop and becomes plain white, and the box fills
+   the entire viewport edge-to-edge instead of being a centered card. */
+#qzSubDialogOverlay:has(.qz-addq-fullscreen){background:#fff!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;padding:0!important}
+.qz-subdialog-box.qz-addq-fullscreen{width:100%;height:100%;max-width:100%;max-height:100%;border-radius:0;box-shadow:none;padding:24px;box-sizing:border-box}
 /* Full, clearly-visible outlines throughout the Add New Questions dialog —
    the default var(--line,#dce4ee) border used elsewhere in the app is too
    pale to read as an outline at all against a white dialog background. */
@@ -8086,6 +8091,7 @@ html,body{overscroll-behavior-y:none}
 .qz-addq-wide .qz-answerkey-panel{border:1.5px solid #6b7280}
 .qz-addq-wide .qz-letter-badge:not(.correct){border-color:#6b7280}
 .qz-addq-wide .qz-addq-upload-btn{border:none;background:linear-gradient(135deg,#a86bea,#5fd6e0);color:#fff;font-weight:600}
+#qzSubDialogBox.qz-addq-wide .qz-addq-title{font-size:23px!important;font-weight:760!important;display:inline-block;background:linear-gradient(135deg,#a86bea,#5fd6e0);color:#fff!important;padding:6px 16px;border-radius:10px}
 .qz-single-card{border:2px solid transparent;border-radius:20px;padding:20px;margin-top:16px;background:linear-gradient(#fff,#fff) padding-box,linear-gradient(135deg,#a86bea,#5fd6e0) border-box;box-shadow:0 14px 32px rgba(20,50,45,.1)}
 
 .qz-page-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px}
@@ -8131,7 +8137,8 @@ html,body{overscroll-behavior-y:none}
 .qz-editor-questions-head{display:flex;align-items:center;justify-content:space-between;margin:20px 18px 8px}
 .qz-editor-questions-head strong{font-size:14px}
 .qz-questions-list{display:flex;flex-direction:column;gap:12px;padding:0 18px}
-.qz-empty-questions{padding:22px;text-align:center;color:var(--muted,#768196);border:1px dashed var(--line,#dce4ee);border-radius:12px;font-size:13px}
+.qz-empty-questions{display:block;width:100%;padding:22px;text-align:center;color:var(--muted,#768196);border:1px dashed var(--line,#dce4ee);border-radius:12px;font-size:13px;background:transparent;font:inherit;cursor:pointer;transition:border-color .15s ease,color .15s ease}
+.qz-empty-questions:hover,.qz-empty-questions:focus-visible{border-color:var(--blue,#2f80ed);color:var(--blue,#2f80ed)}
 .qz-add-question-btn{margin:14px 18px 0;width:calc(100% - 36px);padding:12px;border:1.5px dashed var(--line,#dce4ee);border-radius:14px;background:transparent;color:var(--muted,#768196);font-weight:600;font-size:13px;cursor:pointer}
 .qz-add-question-btn:hover{border-color:var(--blue,#2f80ed);color:var(--blue,#2f80ed)}
 
@@ -9712,7 +9719,7 @@ Q5 Answer B
         if(submitDisabled&&bulkParsed.length)submitLabel=`Add Questions (resolve ${issues} first)`;
       }
       qzOpenSubDialog(`
-        <h3 style="margin:0 0 10px">+ Add New Questions</h3>
+        <h3 class="qz-addq-title" style="margin:0 0 10px">+ Add New Questions</h3>
         <div class="qz-addq-tabs">
           <button type="button" class="qz-addq-tab ${tab==="single"?"active":""}" data-tab="single">Single Question</button>
           <button type="button" class="qz-addq-tab ${tab==="bulk"?"active":""}" data-tab="bulk">All Questions (Bulk Paste)</button>
@@ -9730,7 +9737,7 @@ Q5 Answer B
         <div id="qzAddQBody" style="margin-top:12px">${tab==="single"?singleTabHtml():bulkTabHtml(submitLabel,submitDisabled)}</div>
         ${tab==="single"?`<div class="form-actions" style="margin-top:14px"><button id="qzAddQCancel" class="btn">Cancel</button><button id="qzAddQSubmit" class="btn primary" ${submitDisabled?"disabled":""}>${esc(submitLabel)}</button></div>`:""}
       `);
-      document.getElementById("qzSubDialogBox").classList.add("qz-addq-wide");
+      document.getElementById("qzSubDialogBox").classList.add("qz-addq-wide","qz-addq-fullscreen");
       wire();
     }
     function syncFieldsFromDom(){
@@ -11295,7 +11302,7 @@ Q5 Answer B
       /* Round 5 note 8: a thin "+ Add question here" divider sits above the
          first card, between every pair of cards, and after the last card —
          covering Beginning / between-any-two / End with one mechanism. */
-      wrap.innerHTML=questions.length?questions.map((q,i)=>qzInsertDividerHtml(i-1)+qzQuestionCardHtml(q,i)).join("")+qzInsertDividerHtml(questions.length-1):'<div class="qz-empty-questions">No questions yet. Use “+ Add New Questions” to start.</div>';
+      wrap.innerHTML=questions.length?questions.map((q,i)=>qzInsertDividerHtml(i-1)+qzQuestionCardHtml(q,i)).join("")+qzInsertDividerHtml(questions.length-1):'<button type="button" class="qz-empty-questions" data-after-idx="-1">Click here to start a new question</button>';
       const badges=bodyEl.querySelector(".qz-page-badges");
       if(badges)badges.innerHTML=`${qzBadgePill(`${questions.length} question${questions.length===1?"":"s"}`)}`;
     }
@@ -11423,7 +11430,7 @@ Q5 Answer B
     const listEl=()=>document.getElementById("qzQuestionsList");
     bodyEl.addEventListener("click",async event=>{
       const list=listEl();if(!list||!list.contains(event.target))return handleGlobalActions(event);
-      const divider=event.target.closest(".qz-insert-divider");
+      const divider=event.target.closest(".qz-insert-divider,.qz-empty-questions");
       if(divider){
         qzInsertBlankQuestionHere(Number(divider.dataset.afterIdx));
         return;
