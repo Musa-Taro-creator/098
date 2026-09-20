@@ -8046,12 +8046,14 @@ html,body{overscroll-behavior-y:none}
    needs room for its two-column fields and option rows; every other
    sub-dialog (Quiz Mood, Move Question, Sessions, Cancel confirm, Summary,
    etc.) keeps the original compact 560px box. */
-.qz-subdialog-box.qz-addq-wide{width:min(94%,900px)}
+.qz-subdialog-box.qz-addq-wide{width:min(94%,900px);padding-left:56px;padding-right:56px}
 /* Full-screen variant used only by "+ Add New Questions": the backdrop
    goes plain white (no dim/blur). The box keeps its normal look (same
    width, rounded corners, shadow, horizontally centered) but stretches
-   top-to-bottom so there's no white space above or below it. */
-#qzSubDialogOverlay:has(.qz-addq-fullscreen){background:#fff!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;padding:0!important;align-items:stretch!important}
+   top-to-bottom so there's no white space above or below it. Side padding
+   is kept (unlike top/bottom) so the box has breathing room from the left
+   and right screen edges, especially on narrow/mobile viewports. */
+#qzSubDialogOverlay:has(.qz-addq-fullscreen){background:#fff!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;padding:0 20px!important;align-items:stretch!important}
 .qz-subdialog-box.qz-addq-fullscreen{height:100%;max-height:100%;box-sizing:border-box}
 /* Full, clearly-visible outlines throughout the Add New Questions dialog —
    the default var(--line,#dce4ee) border used elsewhere in the app is too
