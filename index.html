@@ -6605,7 +6605,15 @@ setTimeout(async()=>{try{if(state.isAdmin&&!(await service.isAdminDeviceAllowed(
 
   /* Note 64: system Back closes transient UI before navigating away. */
   let qlHistoryCleanup=false,qlHandlingSystemBack=false;
-  function qlLayerOpen(kind){if(kind==="menu")return !!document.querySelector(".menu.open");if(kind==="sidebar")return $("#sidebar")?.classList.contains("open");if(kind==="modal")return $("#modalOverlay")?.classList.contains("show");return false}
+  /* Kuza's scroll-lag report, continued: this "menu" check ran a
+     document.querySelector(".menu.open") -- with thousands of question
+     cards in the DOM that alone costs tens of milliseconds per call, and
+     it's invoked (via openMenu/closeMenus below and the popstate handler)
+     on every menu open/close and on every scroll event. state.activeMenu
+     is already the single source of truth for which menu (if any) is open
+     -- see the note in the real closeMenus() definition above -- so this
+     can answer instantly instead of scanning the page. */
+  function qlLayerOpen(kind){if(kind==="menu")return !!state.activeMenu;if(kind==="sidebar")return $("#sidebar")?.classList.contains("open");if(kind==="modal")return $("#modalOverlay")?.classList.contains("show");return false}
   function qlPushLayer(kind){if(qlHandlingSystemBack)return;if(history.state?.qlUiLayer===kind)return;history.pushState({...currentRoute(),qlUiLayer:kind},"",location.href)}
   function qlCleanupLayer(kind){setTimeout(()=>{if(!qlLayerOpen(kind)&&history.state?.qlUiLayer===kind&&!qlHistoryCleanup){qlHistoryCleanup=true;history.back()}},0)}
   openModal=function(...args){const was=qlLayerOpen("modal"),result=rawOpenModal(...args);if(!was)qlPushLayer("modal");return result};
