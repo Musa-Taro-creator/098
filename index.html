@@ -11101,6 +11101,28 @@ Q5 Answer B
     qzWireScrollHandoff(bodyEl);
 
     let questions=[],settings;
+    /* Kuza: even after the per-action fixes above, a large question quiz
+       still felt heavy -- because ALL of them sat in the page as real DOM
+       at once (10,000 full question cards = 500,000+ elements), which is
+       simply a lot for any browser to hold and paint, regardless of how
+       efficient the update code is. This ceiling is not the same on every
+       device: on a computer, Kuza confirmed 1000 stays smooth and only
+       5,000-10,000 gets heavy; on an iPad, Kuza confirmed 200 is smooth
+       but 400 already feels delayed and 1000 is properly laggy -- the same
+       DOM-size problem, just arriving much sooner on weaker hardware.
+       QZ_VIRTUALIZE_THRESHOLD is set low enough to cover that (well under
+       the 400 where the iPad first showed delay), so it protects the
+       weakest device Kuza tests on, not just the strongest -- there is no
+       real downside to windowing a quiz that would have been fine
+       unwindowed anyway. Below the threshold, nothing changes --
+       rerenderQuestions() and friends work exactly as before. Above it,
+       only a small window of cards around the current scroll position is
+       ever mounted; qzWinStart/qzWinEnd track that window, and two spacer
+       divs (their heights estimated from the average measured card
+       height) stand in for the un-mounted cards above/below so the
+       scrollbar still represents the true list length. */
+    const QZ_VIRTUALIZE_THRESHOLD=250,QZ_INITIAL_WINDOW=60,QZ_OVERSCAN=15;
+    let qzWinStart=0,qzWinEnd=0,qzEstSlotHeight=220,qzEstSlotHeightMeasured=false,qzWinScrollTicking=false,qzSuppressAutoWindowUntil=0;
     try{
       const rows=await service.getQuizQuestionsAdmin(item.id);
       questions=rows.map(r=>({id:r.id,type:r.type,prompt:r.prompt,options:r.options?[...r.options]:[],correct_answer:r.correct_answer,points:Number(r.points)||1,image:r.image||null,explanation:r.explanation||"",allow_multiple:!!r.allow_multiple,images:Array.isArray(r.images)?[...r.images]:[],session_label:r.session_label||null}));
@@ -11353,12 +11375,130 @@ Q5 Answer B
     function rerenderQuestions(){
       const wrap=document.getElementById("qzQuestionsList");
       if(!wrap)return;
+      if(questions.length>QZ_VIRTUALIZE_THRESHOLD){
+        qzWinStart=0;
+        qzWinEnd=Math.min(questions.length,QZ_INITIAL_WINDOW);
+        qzRenderWindowHtml();
+        qzUpdateQuestionBadge();
+        return;
+      }
       /* Round 5 note 8: a thin "+ Add question here" divider sits above the
          first card, between every pair of cards, and after the last card —
          covering Beginning / between-any-two / End with one mechanism. */
       wrap.innerHTML=questions.length?questions.map((q,i)=>qzInsertDividerHtml(i-1)+qzQuestionCardHtml(q,i)).join("")+qzInsertDividerHtml(questions.length-1):'<button type="button" class="qz-empty-questions" data-after-idx="-1">Click here to start a new question</button>';
       qzUpdateQuestionBadge();
     }
+    /* --- Windowed rendering for very large question lists (see the note by
+       QZ_VIRTUALIZE_THRESHOLD above). Only used once questions.length passes
+       that threshold; everything below it keeps using the plain full-render
+       path untouched. --- */
+    function qzRenderWindowHtml(){
+      const wrap=document.getElementById("qzQuestionsList");
+      if(!wrap)return;
+      const n=questions.length;
+      qzWinStart=Math.max(0,Math.min(qzWinStart,n));
+      qzWinEnd=Math.max(qzWinStart,Math.min(qzWinEnd,n));
+      let html="";
+      for(let i=qzWinStart;i<qzWinEnd;i++)html+=qzInsertDividerHtml(i-1)+qzQuestionCardHtml(questions[i],i);
+      if(qzWinEnd===n)html+=qzInsertDividerHtml(n-1);
+      const topH=Math.round(qzWinStart*qzEstSlotHeight);
+      const bottomH=Math.round((n-qzWinEnd)*qzEstSlotHeight);
+      wrap.innerHTML=`<div id="qzListTopSpacer" style="height:${topH}px"></div>${html}<div id="qzListBottomSpacer" style="height:${bottomH}px"></div>`;
+      qzRemeasureSlotHeight();
+    }
+    /* Keeps the per-question height estimate (used to size the two spacers)
+       close to reality by measuring the window that's actually on screen --
+       self-correcting rather than needing an exact height for every one of
+       potentially 10,000+ questions. Blended with the previous estimate so
+       one unusually short/tall window doesn't cause a visible jump. */
+    function qzRemeasureSlotHeight(){
+      const count=qzWinEnd-qzWinStart;
+      if(count<=0)return;
+      const top=document.getElementById("qzListTopSpacer"),bottom=document.getElementById("qzListBottomSpacer");
+      if(!top||!bottom)return;
+      const total=bottom.getBoundingClientRect().top-top.getBoundingClientRect().bottom;
+      if(total<=0)return;
+      const measured=total/count;
+      /* The very first measurement replaces the 220px placeholder outright
+         rather than blending with it -- that placeholder carries no real
+         information, so averaging it in would just make the spacer sizes
+         (and therefore how far a scrollbar-drag-to-the-end actually lands)
+         slow to converge on a list with real content. Every measurement
+         after that blends, so one unusual window (e.g. several cards with
+         their answer key open) doesn't swing the estimate too far. */
+      qzEstSlotHeight=qzEstSlotHeightMeasured?qzEstSlotHeight*0.5+measured*0.5:measured;
+      qzEstSlotHeightMeasured=true;
+      /* The spacers were just rendered using whatever estimate was current
+         BEFORE this measurement, so they can be off (dramatically so, on
+         the very first render, before any real card height was known at
+         all) -- resize them in place now with the corrected number rather
+         than waiting for the next scroll-triggered render to catch up.
+         This is what makes "drag the scrollbar straight to the bottom"
+         land in the right place on the first try instead of needing a
+         second attempt once the estimate has caught up. */
+      top.style.height=Math.round(qzWinStart*qzEstSlotHeight)+"px";
+      bottom.style.height=Math.round((questions.length-qzWinEnd)*qzEstSlotHeight)+"px";
+    }
+    /* Recenters the mounted window on a specific index -- used whenever a
+       question is inserted/duplicated/moved/deleted or jumped to (Question
+       Manager search) so that index is guaranteed to be on-screen right
+       after, however far it is from whatever was mounted before. */
+    function qzRecenterWindowOn(idx){
+      const n=questions.length;
+      const half=Math.floor(QZ_INITIAL_WINDOW/2);
+      qzWinStart=Math.max(0,Math.min(idx-half,Math.max(0,n-QZ_INITIAL_WINDOW)));
+      qzWinEnd=Math.min(n,qzWinStart+QZ_INITIAL_WINDOW);
+      qzRenderWindowHtml();
+      /* A manual recenter is always followed (by its caller) with a
+         scrollIntoView on the target card, which fires its own "scroll"
+         event a moment later. Without this guard, that self-triggered
+         scroll would run straight through qzMaybeUpdateWindow's own
+         viewport math, which -- being scroll-position-based, not
+         index-based -- doesn't know this window was already placed
+         deliberately, and can re-render it right out from under the
+         highlight/focus qzHighlightAndScrollToIdx is about to apply.
+         Ignoring auto scroll-driven updates for a brief moment after any
+         manual recenter avoids that stomp without disabling normal
+         scroll-driven windowing once the settle is over. */
+      qzSuppressAutoWindowUntil=(window.performance?performance.now():Date.now())+400;
+    }
+    function qzWindowNeedsMove(newStart,newEnd){
+      return newStart<qzWinStart-Math.floor(QZ_OVERSCAN/2)||newStart>qzWinStart+Math.floor(QZ_OVERSCAN/2)||newEnd>qzWinEnd||newEnd<qzWinEnd-QZ_OVERSCAN;
+    }
+    function qzMaybeUpdateWindow(){
+      if(qzWinScrollTicking)return;
+      qzWinScrollTicking=true;
+      requestAnimationFrame(()=>{
+        qzWinScrollTicking=false;
+        if((window.performance?performance.now():Date.now())<qzSuppressAutoWindowUntil)return;
+        const wrap=document.getElementById("qzQuestionsList");
+        if(!wrap||questions.length<=QZ_VIRTUALIZE_THRESHOLD)return;
+        const scroller=document.getElementById("qzPageBody");
+        if(!scroller)return;
+        const slot=Math.max(40,qzEstSlotHeight);
+        const listTopWithinScroller=wrap.getBoundingClientRect().top-scroller.getBoundingClientRect().top+scroller.scrollTop;
+        const relScroll=Math.max(0,scroller.scrollTop-listTopWithinScroller);
+        const viewportSlots=Math.ceil(scroller.clientHeight/slot)+QZ_OVERSCAN*2;
+        const firstVisible=Math.floor(relScroll/slot);
+        const n=questions.length;
+        const newStart=Math.max(0,firstVisible-QZ_OVERSCAN);
+        const newEnd=Math.min(n,firstVisible+viewportSlots);
+        if(qzWindowNeedsMove(newStart,newEnd)){
+          qzWinStart=newStart;qzWinEnd=newEnd;
+          qzRenderWindowHtml();
+        }
+      });
+    }
+    /* qzMaybeUpdateWindow closes over this specific quiz-editor instance's
+       `questions` array, so it can't be handed to addEventListener directly
+       here -- this whole function runs fresh every time a quiz is opened,
+       and addEventListener has no way to swap out a previous instance's
+       closure for a new one, only add another one alongside it. Registering
+       the real "scroll" listener would silently accumulate one per editor
+       open/close cycle. Instead, the ONE real listener is registered once,
+       at module scope, right below qzSaveBarOnScroll's (see the note
+       there) -- this just points that dispatcher at the current instance. */
+    qzActiveWinScroll=qzMaybeUpdateWindow;
     function qzUpdateQuestionBadge(){
       const badges=bodyEl.querySelector(".qz-page-badges");
       if(badges)badges.innerHTML=`${qzBadgePill(`${questions.length} question${questions.length===1?"":"s"}`)}`;
@@ -11412,7 +11552,21 @@ Q5 Answer B
     }
     function qzInsertCardsAt(insertAt,newQs){
       const wrap=document.getElementById("qzQuestionsList");
-      if(!wrap||!wrap.querySelector(".qz-question-card")){rerenderQuestions();return}
+      if(!wrap)return;
+      if(questions.length>QZ_VIRTUALIZE_THRESHOLD){
+        /* The array already has newQs spliced in by the caller, so
+           questions.length already reflects the new total -- just make
+           sure the mounted window covers where they landed. Re-rendering a
+           ~60-card window is cheap regardless of whether the list has 2,000
+           or 200,000 questions, so there's no need for the surgical
+           insertAdjacentHTML+renumber dance the non-virtualized path below
+           still uses (that dance is what scales with distance-to-end-of-
+           list, which is exactly what got slow at 5,000-10,000). */
+        qzRecenterWindowOn(insertAt);
+        qzUpdateQuestionBadge();
+        return;
+      }
+      if(!wrap.querySelector(".qz-question-card")){rerenderQuestions();return}
       const dividers=wrap.querySelectorAll(".qz-insert-divider");
       const refDivider=dividers[insertAt];
       const html=newQs.map((q,k)=>qzQuestionCardHtml(q,insertAt+k)+qzInsertDividerHtml(insertAt+k)).join("");
@@ -11425,6 +11579,11 @@ Q5 Answer B
     function qzRemoveCardAt(delIdx){
       const wrap=document.getElementById("qzQuestionsList");
       if(!wrap)return;
+      if(questions.length>QZ_VIRTUALIZE_THRESHOLD){
+        qzRecenterWindowOn(Math.min(delIdx,questions.length-1));
+        qzUpdateQuestionBadge();
+        return;
+      }
       const cards=wrap.querySelectorAll(".qz-question-card");
       const card=cards[delIdx];
       if(!card){rerenderQuestions();return}
@@ -11439,6 +11598,10 @@ Q5 Answer B
     function qzSwapAdjacentCards(i,j){
       const wrap=document.getElementById("qzQuestionsList");
       if(!wrap)return;
+      if(questions.length>QZ_VIRTUALIZE_THRESHOLD){
+        qzRecenterWindowOn(Math.min(i,j));
+        return;
+      }
       const cards=wrap.querySelectorAll(".qz-question-card");
       const lo=Math.min(i,j),hi=Math.max(i,j);
       const a=cards[lo],b=cards[hi];
@@ -11455,6 +11618,7 @@ Q5 Answer B
        exactly where it landed, without a jarring jump to the very top or
        bottom of a long editor. */
     function qzHighlightAndScrollToIdx(idx){
+      if(questions.length>QZ_VIRTUALIZE_THRESHOLD&&(idx<qzWinStart||idx>=qzWinEnd))qzRecenterWindowOn(idx);
       const card=document.querySelector(`.qz-question-card[data-qidx="${idx}"]`);
       if(!card)return;
       /* Instant, not "smooth" — a lingering smooth-scroll animation was
@@ -11790,6 +11954,15 @@ Q5 Answer B
   }
   window.addEventListener("scroll",qzSaveBarOnScroll,{passive:true});
   document.addEventListener("scroll",qzSaveBarOnScroll,{passive:true,capture:true});
+  /* Backs the large-question-list windowed rendering above (see
+     QZ_VIRTUALIZE_THRESHOLD): each quiz-editor open assigns its own
+     qzMaybeUpdateWindow to qzActiveWinScroll, but the real "scroll"
+     listener -- which can't be swapped per open the way a plain variable
+     can -- is registered exactly once here, matching qzSaveBarOnScroll's
+     own once-at-module-load pattern just above. */
+  let qzActiveWinScroll=null;
+  window.addEventListener("scroll",()=>qzActiveWinScroll&&qzActiveWinScroll(),{passive:true});
+  document.addEventListener("scroll",()=>qzActiveWinScroll&&qzActiveWinScroll(),{passive:true,capture:true});
   function qzResetSaveBarVisibility(){
     qzSaveBarLastY=qzSaveBarScrollY();
     document.querySelector("#qzPageBody .qz-save-bar")?.classList.remove("qz-hide");
