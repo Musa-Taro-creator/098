@@ -8092,7 +8092,7 @@ html,body{overscroll-behavior-y:none}
 .qz-addq-wide .qz-answerkey-panel{border:1.5px solid #6b7280}
 .qz-addq-wide .qz-letter-badge:not(.correct){border-color:#6b7280}
 .qz-addq-wide .qz-addq-upload-btn{border:none;background:linear-gradient(135deg,#a86bea,#5fd6e0);color:#fff;font-weight:600}
-#qzSubDialogBox.qz-addq-wide .qz-addq-title{font-size:23px!important;font-weight:760!important;display:inline-block;background:linear-gradient(135deg,#a86bea,#5fd6e0);color:#fff!important;padding:6px 16px;border-radius:10px}
+#qzSubDialogBox.qz-addq-wide .qz-addq-title{font-size:20px!important;font-weight:760!important;display:inline-block;background:linear-gradient(135deg,#a86bea,#5fd6e0);color:#fff!important;padding:6px 16px;border-radius:10px}
 .qz-single-card{border:2px solid transparent;border-radius:20px;padding:20px;margin-top:16px;background:linear-gradient(#fff,#fff) padding-box,linear-gradient(135deg,#a86bea,#5fd6e0) border-box;box-shadow:0 14px 32px rgba(20,50,45,.1)}
 
 .qz-page-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px}
@@ -13091,8 +13091,8 @@ window.addEventListener("popstate",()=>setTimeout(syncProfileUi,0));q("modalClos
     }).catch(function(){checking=false});
   }
   establishBaseline().then(function(){
-    setTimeout(checkForUpdate,60*1000);
-    setInterval(checkForUpdate,5*60*1000);
+    setTimeout(checkForUpdate,3*1000);
+    setInterval(checkForUpdate,20*1000);
     document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")checkForUpdate()});
     window.addEventListener("focus",checkForUpdate);
   });
